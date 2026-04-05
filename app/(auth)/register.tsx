@@ -60,14 +60,27 @@ export default function RegisterScreen() {
         method: 'POST',
         body: JSON.stringify({ username, email, password }),
       });
+
+      const bodyText = await res.text();
+      let data;
+      try {
+        data = JSON.parse(bodyText);
+      } catch (e) {
+        data = null;
+      }
+
       if (!res.ok) {
-        const body = await res.text();
-        Alert.alert('Registration Failed', body || 'Something went wrong. Please try again.');
+        const message = data?.message || bodyText || 'Something went wrong. Please try again.';
+        Alert.alert('Registration Failed', message);
         return;
       }
-      const data = await res.json();
-      login(data.token, { username, email });
-      router.replace('/(tabs)');
+
+      if (data && data.token) {
+        login(data.token, { username, email });
+        router.replace('/(tabs)');
+      } else {
+        throw new Error('No token received');
+      }
     } catch (e) {
       Alert.alert('Error', 'Could not connect to the server. Please check your connection.');
     } finally {
